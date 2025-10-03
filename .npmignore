@@ -8,6 +8,7 @@ examples
 nodemon.json
 package-lock.json
 rollup.config.mjs
+vitest.config.ts
 tsconfig.json
 .gitignore
 .npmignore

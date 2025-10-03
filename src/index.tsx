@@ -2,7 +2,7 @@ import { ChildComponent } from "./file.tsx";
 
 const MyComponent = () => {
   return (
-    <div>
+    <div data-testid="my-component">
       MyComponent 11
       <ChildComponent />
     </div>
