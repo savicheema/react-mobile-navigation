@@ -33,7 +33,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rimraf dist && rollup -c",
-    "dev": "nodemon"
+    "dev": "nodemon",
+    "prepare": "husky"
   },
   "peerDependencies": {
     "react": "^19.2.0",

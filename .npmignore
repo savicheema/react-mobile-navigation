@@ -2,8 +2,12 @@ node_modules
 tests
 src
 examples
+.git
+.husky
 
 nodemon.json
 package-lock.json
 rollup.config.mjs
 tsconfig.json
+.gitignore
+.npmignore
