@@ -1,0 +1,9 @@
+node_modules
+tests
+src
+examples
+
+nodemon.json
+package-lock.json
+rollup.config.mjs
+tsconfig.json

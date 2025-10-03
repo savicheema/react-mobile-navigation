@@ -1,0 +1,58 @@
+{
+  "name": "@savicheema/react-mobile-navigation",
+  "version": "0.1.0",
+  "description": "A library to build navigation in your React app similar to a native mobile application, especially useful incase of building for PWA.",
+  "keywords": [
+    "navigation",
+    "mobile",
+    "react",
+    "pwa"
+  ],
+  "homepage": "https://github.com/savicheema/react-mobile-navigation#readme",
+  "bugs": {
+    "url": "https://github.com/savicheema/react-mobile-navigation/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/savicheema/react-mobile-navigation.git"
+  },
+  "license": "MIT",
+  "author": "savicheema",
+  "type": "module",
+  "main": "./dist/cjs/index.jsx",
+  "exports": [
+    "./dist/esm/index.jsx",
+    "./dist/cjs/index.jsx"
+  ],
+  "module": "./dist/esm/index.jsx",
+  "browser": "./dist/esm/index.jsx",
+  "types": "./dist/esm/index.d.ts",
+  "files": [
+    "./dist"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rimraf dist && rollup -c",
+    "dev": "nodemon"
+  },
+  "peerDependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-typescript": "^12.1.4",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "husky": "^9.1.7",
+    "nodemon": "^3.1.10",
+    "rimraf": "^6.0.1",
+    "rollup": "^4.52.4",
+    "rollup-plugin-dts": "^6.2.3",
+    "tslib": "^2.8.1",
+    "typescript": "^5.9.3"
+  }
+}
