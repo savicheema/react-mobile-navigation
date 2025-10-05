@@ -1,0 +1,1 @@
+export const CSS_CLASS_PREFIX = "SAVI_MOBILE_NAV_";
