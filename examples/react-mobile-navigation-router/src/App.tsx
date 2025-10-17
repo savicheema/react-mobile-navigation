@@ -1,13 +1,20 @@
 import "./App.css";
 import MobileNavigation, {
   type Content,
+  useClientMobileNavigationHook,
 } from "@savicheema/react-mobile-navigation";
 import { BrowserRouter, Routes, Route, Link } from "react-router";
 
-const ContentComponent = ({ heading }: { heading: string }) => (
+const ContentComponent = ({
+  heading,
+  currentSerial,
+}: {
+  heading: string;
+  currentSerial: number;
+}) => (
   <>
     <div className="my-2">
-      ContentComponent <b>{heading}</b>
+      ContentComponent: <b>{heading}</b>&nbsp;<i>{currentSerial}</i>
     </div>
     <Link to={"/blah"} className="bg-green-700 text-white px-[40px] py-[12px]">
       blah
@@ -15,10 +22,16 @@ const ContentComponent = ({ heading }: { heading: string }) => (
   </>
 );
 
-const ContentDefaultComponent = ({ heading }: { heading: string }) => (
+const ContentDefaultComponent = ({
+  heading,
+  currentSerial,
+}: {
+  heading: string;
+  currentSerial: number;
+}) => (
   <>
     <div className="my-2">
-      ContentDefault <b>{heading}</b>
+      ContentDefault: <b>{heading}</b>&nbsp;<i>{currentSerial}</i>
     </div>
     <div>
       <Link to={"/1"} className="bg-green-700 text-white px-[40px] py-[12px]">
@@ -27,14 +40,30 @@ const ContentDefaultComponent = ({ heading }: { heading: string }) => (
     </div>
   </>
 );
-const Content = ({ heading }: { heading: string }) => (
-  <BrowserRouter>
-    <Routes>
-      <Route path="/1" element={<ContentComponent heading={heading} />} />
-      <Route path="*" element={<ContentDefaultComponent heading={heading} />} />
-    </Routes>
-  </BrowserRouter>
-);
+const Content = ({ heading }: { heading: string }) => {
+  const mobileNavigationContext = useClientMobileNavigationHook();
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/1"
+          element={
+            <ContentComponent heading={heading} {...mobileNavigationContext} />
+          }
+        />
+        <Route
+          path="*"
+          element={
+            <ContentDefaultComponent
+              heading={heading}
+              {...mobileNavigationContext}
+            />
+          }
+        />
+      </Routes>
+    </BrowserRouter>
+  );
+};
 
 function App() {
   const contents: Content[] = [
@@ -45,6 +74,7 @@ function App() {
         </>
       ),
       navButtonTitle: "first",
+      serial: 1,
     },
     {
       content: (
@@ -53,6 +83,7 @@ function App() {
         </>
       ),
       navButtonTitle: "second",
+      serial: 2,
     },
     {
       content: (
@@ -61,6 +92,7 @@ function App() {
         </>
       ),
       navButtonTitle: "third",
+      serial: 3,
     },
   ];
   return (
