@@ -114,7 +114,7 @@ export const useNavigationScrollHook = () => {
 
     // scroll right
     if (mod > 120 && mod < window.innerWidth / 2) {
-      window.scrollTo({
+      containerRef.current!.scroll({
         left:
           Math.floor(containerRef.current!.scrollLeft / window.innerWidth) *
           window.innerWidth,
@@ -130,7 +130,7 @@ export const useNavigationScrollHook = () => {
         containerRef.current!.scrollLeft >
         120
     ) {
-      window.scrollTo({
+      containerRef.current!.scroll({
         left:
           Math.ceil(containerRef.current!.scrollLeft / window.innerWidth) *
           window.innerWidth,
@@ -144,9 +144,15 @@ export const useNavigationScrollHook = () => {
 
   React.useEffect(() => {
     if (!isScrolling) {
-      window.addEventListener("touchmove", debouncedScrollEventHandler);
+      containerRef.current!.addEventListener(
+        "touchmove",
+        debouncedScrollEventHandler
+      );
     } else {
-      window.removeEventListener("touchmove", debouncedScrollEventHandler);
+      containerRef.current!.removeEventListener(
+        "touchmove",
+        debouncedScrollEventHandler
+      );
     }
   }, [isScrolling]);
 
