@@ -65,6 +65,27 @@ const Content = ({ heading }: { heading: string }) => {
   );
 };
 
+const SVG = ({
+  size,
+  highlightStroke,
+}: {
+  size: number | undefined;
+  highlightStroke: string | undefined;
+}) => {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100">
+      <circle
+        r={"46"}
+        cx={"50"}
+        cy={"50"}
+        stroke={highlightStroke || "hsla(0, 0%, 20%, 0.5)"}
+        fill="transparent"
+        strokeWidth={"8px"}
+      />
+    </svg>
+  );
+};
+
 function App() {
   const contents: Content[] = [
     {
@@ -73,8 +94,9 @@ function App() {
           <Content heading="First" />
         </>
       ),
-      navButtonTitle: "first",
+      navButtonTitle: "First",
       serial: 1,
+      NavSVGIcon: SVG,
     },
     {
       content: (
@@ -82,7 +104,8 @@ function App() {
           <Content heading="Second" />
         </>
       ),
-      navButtonTitle: "second",
+      navButtonTitle: "Second",
+      NavSVGIcon: SVG,
       serial: 2,
     },
     {
@@ -91,14 +114,30 @@ function App() {
           <Content heading="Third" />
         </>
       ),
-      navButtonTitle: "third",
+      navButtonTitle: "Third",
+      NavSVGIcon: SVG,
       serial: 3,
     },
+    // {
+    //   content: (
+    //     <>
+    //       <Content heading="Fourth" />
+    //     </>
+    //   ),
+    //   navButtonTitle: "Fourth",
+    //   NavSVGIcon: SVG,
+    //   serial: 4,
+    // },
   ];
   return (
     <>
       App
-      <MobileNavigation contents={contents} />
+      <MobileNavigation
+        contents={contents}
+        navigationBarBGColor="hsla(125, 50%, 20%, 0.5)"
+        navigationTextColor="hsl(125, 50%, 25%)"
+        navIconSize={24}
+      />
     </>
   );
 }

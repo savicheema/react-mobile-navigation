@@ -6,7 +6,13 @@ import { CSS_CLASS_PREFIX } from "./constants";
 export type Content = {
   content: JSX.Element;
   navButtonTitle: string;
-  svgIcon?: SVGElement;
+  NavSVGIcon: ({
+    size,
+    highlightStroke,
+  }: {
+    size: number | undefined;
+    highlightStroke: string | undefined;
+  }) => JSX.Element;
   serial: number;
 };
 const promiseScrollRight = ({ left }: { left: number }): Promise<void> =>
@@ -127,6 +133,10 @@ export const useNavigationScrollHook = () => {
     }
   }, [isScrolling]);
 
+  React.useEffect(() => {
+    window.scrollTo({ left: 0, top: 0 });
+  }, []);
+
   async function scroll(index: number, serial: number) {
     setCurrentSerial(serial);
 
@@ -152,6 +162,7 @@ export const useNavigationScrollHook = () => {
     setCurrentScrollLeft,
     scroll,
     currentSerial,
+    isScrolling,
   };
 };
 
@@ -168,7 +179,13 @@ const ContentContainer = ({ contents }: { contents: Content[] }) => {
         className={`${CSS_CLASS_PREFIX}container`}
         data-testid="content-container"
       >
-        <style>{`div.${CSS_CLASS_PREFIX}section {flex: 1 0 100vw; justify-content: center;}`}</style>
+        <style>{`div.${CSS_CLASS_PREFIX}section {
+          flex: 1 0 100vw; 
+          justify-content: center; 
+          border-left: 1px solid #ddd; 
+          border-right: 1px solid #ddd;
+          min-height: 100vh;
+        }`}</style>
         {!contents?.length
           ? "no content"
           : contents.map((content, index) => (
@@ -185,8 +202,18 @@ const ContentContainer = ({ contents }: { contents: Content[] }) => {
   );
 };
 
-const NavigationBar = ({ contents }: { contents: Content[] }) => {
-  const { scroll } = useNavigationScrollHook();
+const NavigationBar = ({
+  contents,
+  bgColor,
+  textColor,
+  navIconSize,
+}: {
+  contents: Content[];
+  bgColor?: string | undefined;
+  textColor?: string | undefined;
+  navIconSize?: number;
+}) => {
+  const { scroll, currentSerial, isScrolling } = useNavigationScrollHook();
   return (
     <>
       <style>
@@ -195,43 +222,80 @@ const NavigationBar = ({ contents }: { contents: Content[] }) => {
             right: 0;
             left: 0;
             bottom: 8px;
-            background-color: black;
+            background-color: white;
             color: white;
             display: flex;
             justify-content: space-evenly;
             max-width: 100vw;
+          box-shadow: ${bgColor} 0 -4px;
           }`}
       </style>
       <style>
         {`button.${CSS_CLASS_PREFIX}nav-button {
-                      background-color: red;
+                      background-color: transparent;
+                      border: none;
+                      outline: none
                       flex: 1 0 auto;
-                      border: 1px solid white;
                       padding: 16px 0;
 
                       @media screen and (min-width: 720px) {
                         padding: 12px 0;
                       }
+                    }
+                    
+                    .${CSS_CLASS_PREFIX}button-content {
+                      display: flex;
+                      flex-direction: column;
+                      align-items: center;
+                      justify-content: space-between;
+                      min-height: 40px;
+                      font-size: 12px;
                     }`}
       </style>
       <div
         className={`${CSS_CLASS_PREFIX}navigation-bar`}
         data-testid="navigation-bar"
+        style={{ borderTop: `2px solid ${bgColor}` }}
       >
         {!contents?.length
           ? null
-          : contents.map((content, index) => (
-              <button
-                type="button"
-                className={`${CSS_CLASS_PREFIX}nav-button`}
-                onClick={async () => {
-                  scroll(index, content.serial);
-                }}
-                key={index}
-              >
-                {content.navButtonTitle}
-              </button>
-            ))}
+          : contents.map((content, index) => {
+              const { NavSVGIcon } = content;
+              return (
+                <button
+                  type="button"
+                  className={`${CSS_CLASS_PREFIX}nav-button`}
+                  onClick={async () => {
+                    if (isScrolling) return;
+                    scroll(index, content.serial);
+                  }}
+                  key={index}
+                >
+                  <div className={`${CSS_CLASS_PREFIX}button-content`}>
+                    <NavSVGIcon
+                      size={navIconSize}
+                      highlightStroke={
+                        currentSerial === content.serial ? textColor : ""
+                      }
+                    />
+                    <span
+                      style={{
+                        color:
+                          currentSerial === content.serial
+                            ? textColor
+                            : "hsla(0, 0%, 20%, 0.6)",
+                      }}
+                    >
+                      {currentSerial === content.serial ? (
+                        <b>{content.navButtonTitle}</b>
+                      ) : (
+                        content.navButtonTitle
+                      )}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
       </div>
     </>
   );
@@ -256,7 +320,17 @@ const MobileNavigationContext =
     setCurrentSerial: () => 1,
   });
 
-const MobileNavigation = ({ contents }: { contents: Content[] }) => {
+const MobileNavigation = ({
+  contents,
+  navigationBarBGColor,
+  navigationTextColor,
+  navIconSize = 20,
+}: {
+  contents: Content[];
+  navigationBarBGColor?: string;
+  navigationTextColor?: string;
+  navIconSize?: number;
+}) => {
   function sortContent(content1: Content, content2: Content) {
     return content1.serial - content2.serial;
   }
@@ -279,7 +353,12 @@ const MobileNavigation = ({ contents }: { contents: Content[] }) => {
     >
       <div data-testid="mobile-navigation">
         <ContentContainer contents={sortedContent} />
-        <NavigationBar contents={sortedContent} />
+        <NavigationBar
+          contents={sortedContent}
+          bgColor={navigationBarBGColor}
+          textColor={navigationTextColor}
+          navIconSize={navIconSize}
+        />
       </div>
     </MobileNavigationContext.Provider>
   );
