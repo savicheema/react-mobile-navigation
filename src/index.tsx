@@ -15,15 +15,21 @@ export type Content = {
   }) => JSX.Element;
   serial: number;
 };
-const promiseScrollRight = ({ left }: { left: number }): Promise<void> =>
+const promiseScrollRight = ({
+  element,
+  left,
+}: {
+  element: HTMLElement;
+  left: number;
+}): Promise<void> =>
   new Promise((resolve) => {
-    window.scrollTo({
+    element.scroll({
       left,
       behavior: "smooth",
     });
 
     const interval = setInterval(() => {
-      if (window.scrollX >= left - 10) {
+      if (element.scrollLeft >= left - 10) {
         clearInterval(interval);
         setTimeout(() => {
           resolve();
@@ -33,20 +39,22 @@ const promiseScrollRight = ({ left }: { left: number }): Promise<void> =>
   });
 
 const promiseScrollLeft = ({
+  element,
   left,
   currentLeft,
 }: {
+  element: HTMLElement;
   left: number;
   currentLeft: number;
 }): Promise<void> =>
   new Promise((resolve) => {
-    window.scrollTo({
+    element.scroll({
       left,
       behavior: "smooth",
     });
 
     const interval = setInterval(() => {
-      if (window.scrollX <= left) {
+      if (element.scrollLeft <= left) {
         clearInterval(interval);
         setTimeout(() => {
           resolve();
@@ -55,9 +63,13 @@ const promiseScrollLeft = ({
     }, 100);
   });
 
-const promiseScrollTop = (): Promise<void> =>
+const promiseScrollTop = ({
+  element,
+}: {
+  element: HTMLElement;
+}): Promise<void> =>
   new Promise((resolve) => {
-    window.scrollTo({ top: 0, behavior: "instant" });
+    element.scroll({ top: 0, behavior: "instant" });
     setTimeout(() => {
       resolve();
     }, 40);
@@ -92,18 +104,20 @@ export const useNavigationScrollHook = () => {
     setIsScrolling,
     setCurrentSerial,
     currentSerial,
+    containerRef,
   } = React.useContext(MobileNavigationContext);
 
   function handleScrollEvent(e: Event) {
     if (isScrolling) return;
 
-    const mod = window.scrollX % window.innerWidth;
+    const mod = containerRef.current!.scrollLeft % window.innerWidth;
 
     // scroll right
     if (mod > 120 && mod < window.innerWidth / 2) {
       window.scrollTo({
         left:
-          Math.floor(window.scrollX / window.innerWidth) * window.innerWidth,
+          Math.floor(containerRef.current!.scrollLeft / window.innerWidth) *
+          window.innerWidth,
         behavior: "smooth",
       });
       return;
@@ -111,12 +125,15 @@ export const useNavigationScrollHook = () => {
     // scroll left
     if (
       mod > window.innerWidth / 2 &&
-      Math.ceil(window.scrollX / window.innerWidth) * window.innerWidth -
-        window.scrollX >
+      Math.ceil(containerRef.current!.scrollLeft / window.innerWidth) *
+        window.innerWidth -
+        containerRef.current!.scrollLeft >
         120
     ) {
       window.scrollTo({
-        left: Math.ceil(window.scrollX / window.innerWidth) * window.innerWidth,
+        left:
+          Math.ceil(containerRef.current!.scrollLeft / window.innerWidth) *
+          window.innerWidth,
         behavior: "smooth",
       });
       return;
@@ -134,7 +151,7 @@ export const useNavigationScrollHook = () => {
   }, [isScrolling]);
 
   React.useEffect(() => {
-    window.scrollTo({ left: 0, top: 0 });
+    containerRef.current!.scroll({ left: 0, top: 0 });
   }, []);
 
   async function scroll(index: number, serial: number) {
@@ -146,14 +163,18 @@ export const useNavigationScrollHook = () => {
     const left = index * window.innerWidth;
 
     if (left > currentScrollLeft) {
-      await promiseScrollRight({ left });
+      await promiseScrollRight({ element: containerRef.current!, left });
     } else {
-      await promiseScrollLeft({ left, currentLeft: currentScrollLeft });
+      await promiseScrollLeft({
+        element: containerRef.current!,
+        left,
+        currentLeft: currentScrollLeft,
+      });
     }
 
-    setCurrentScrollLeft(window.scrollX);
+    setCurrentScrollLeft(containerRef.current!.scrollLeft);
 
-    await promiseScrollTop();
+    await promiseScrollTop({ element: containerRef.current! });
 
     setIsScrolling(false);
   }
@@ -163,21 +184,27 @@ export const useNavigationScrollHook = () => {
     scroll,
     currentSerial,
     isScrolling,
+    containerRef,
   };
 };
 
 const ContentContainer = ({ contents }: { contents: Content[] }) => {
-  const { currentSerial } = useNavigationScrollHook();
+  const { currentSerial, containerRef } = useNavigationScrollHook();
   return (
     <>
       <style>
         {`.${CSS_CLASS_PREFIX}container {
         display: flex;
+        flex: 1 0 auto;
+        max-height: 90vh;
+        overflow-x: visible;
+        overflow-y: auto;
       }`}
       </style>
       <div
         className={`${CSS_CLASS_PREFIX}container`}
         data-testid="content-container"
+        ref={containerRef}
       >
         <style>{`div.${CSS_CLASS_PREFIX}section {
           flex: 1 0 100vw; 
@@ -218,10 +245,10 @@ const NavigationBar = ({
     <>
       <style>
         {`div.${CSS_CLASS_PREFIX}navigation-bar {
-            position: fixed;
-            right: 0;
-            left: 0;
-            bottom: 8px;
+            // position: fixed;
+            // right: 0;
+            // left: 0;
+            // bottom: 8px;
             background-color: white;
             color: white;
             display: flex;
@@ -308,6 +335,7 @@ type MobileNavigationContextType = {
   setIsScrolling: React.Dispatch<React.SetStateAction<boolean>>;
   currentSerial: number;
   setCurrentSerial: React.Dispatch<React.SetStateAction<number>>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
 };
 
 const MobileNavigationContext =
@@ -318,6 +346,7 @@ const MobileNavigationContext =
     setIsScrolling: () => false,
     currentSerial: 1,
     setCurrentSerial: () => 1,
+    containerRef: { current: null },
   });
 
 const MobileNavigation = ({
@@ -340,6 +369,9 @@ const MobileNavigation = ({
   const [currentScrollLeft, setCurrentScrollLeft] = React.useState(0);
   const [isScrolling, setIsScrolling] = React.useState(false);
   const [currentSerial, setCurrentSerial] = React.useState(1);
+
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
+
   return (
     <MobileNavigationContext.Provider
       value={{
@@ -349,9 +381,21 @@ const MobileNavigation = ({
         setIsScrolling,
         currentSerial,
         setCurrentSerial,
+        containerRef,
       }}
     >
-      <div data-testid="mobile-navigation">
+      <style>{`
+      html, body {
+       overflow: hidden; 
+      }
+      .${CSS_CLASS_PREFIX}mobile-navigation {
+        display: flex;
+        flex-direction: column;
+      }`}</style>
+      <div
+        data-testid="mobile-navigation"
+        className={`${CSS_CLASS_PREFIX}mobile-navigation`}
+      >
         <ContentContainer contents={sortedContent} />
         <NavigationBar
           contents={sortedContent}
