@@ -1,6 +1,6 @@
 {
   "name": "@savicheema/react-mobile-navigation",
-  "version": "0.9.4",
+  "version": "0.9.5",
   "description": "A library to build navigation in your React app similar to a native mobile application, especially useful incase of building for PWA.",
   "keywords": [
     "navigation",
@@ -30,7 +30,7 @@
     "./dist"
   ],
   "scripts": {
-    "build": "rimraf dist && rollup --config rollup.config.mts",
+    "build": "rimraf dist && rollup --config rollup.config.mts --configPlugin @rollup/plugin-typescript",
     "dev": "nodemon",
     "prepare": "husky",
     "test": "vitest",

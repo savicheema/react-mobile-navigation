@@ -1,7 +1,9 @@
 // import { type ReactElement } from "react";
 import type { JSX } from "react";
 import * as React from "react";
-import { CSS_CLASS_PREFIX } from "./constants";
+import { APP_MODES, CSS_CLASS_PREFIX } from "./constants";
+import { useInitialScaleHook } from "./hooks";
+import { useAppModeHook } from "./hooks";
 
 export type Content = {
   content: JSX.Element;
@@ -31,9 +33,12 @@ const promiseScrollRight = ({
     const interval = setInterval(() => {
       if (element.scrollLeft >= left - 10) {
         clearInterval(interval);
-        setTimeout(() => {
-          resolve();
-        }, (left / window.innerWidth) * 200);
+        setTimeout(
+          () => {
+            resolve();
+          },
+          (left / window.innerWidth) * 200,
+        );
       }
     }, 100);
   });
@@ -56,9 +61,12 @@ const promiseScrollLeft = ({
     const interval = setInterval(() => {
       if (element.scrollLeft <= left) {
         clearInterval(interval);
-        setTimeout(() => {
-          resolve();
-        }, ((currentLeft - left) / window.innerWidth) * 200);
+        setTimeout(
+          () => {
+            resolve();
+          },
+          ((currentLeft - left) / window.innerWidth) * 200,
+        );
       }
     }, 100);
   });
@@ -146,12 +154,12 @@ export const useNavigationScrollHook = () => {
     if (!isScrolling) {
       containerRef.current!.addEventListener(
         "touchmove",
-        debouncedScrollEventHandler
+        debouncedScrollEventHandler,
       );
     } else {
       containerRef.current!.removeEventListener(
         "touchmove",
-        debouncedScrollEventHandler
+        debouncedScrollEventHandler,
       );
     }
   }, [isScrolling]);
@@ -196,13 +204,33 @@ export const useNavigationScrollHook = () => {
 
 const ContentContainer = ({ contents }: { contents: Content[] }) => {
   const { currentSerial, containerRef } = useNavigationScrollHook();
+  const { appMode } = React.useContext(MobileNavigationContext);
+  function getContainerHeight(
+    appMode: "standalone" | "fullscreen" | "minimal-ui" | "browser",
+  ) {
+    switch (appMode) {
+      case APP_MODES["browser"]: {
+        return "84vh";
+      }
+      case APP_MODES["minimal-ui"]: {
+        return "50vh";
+      }
+      case APP_MODES["fullscreen"]: {
+      }
+      case APP_MODES["standalone"]: {
+      }
+      default: {
+        return "90vh";
+      }
+    }
+  }
   return (
     <>
       <style>
         {`.${CSS_CLASS_PREFIX}container {
         display: flex;
         flex: 1 0 auto;
-        max-height: 90vh;
+        max-height: ${getContainerHeight(appMode)};
         overflow-x: visible;
         overflow-y: auto;
       }`}
@@ -342,6 +370,7 @@ type MobileNavigationContextType = {
   currentSerial: number;
   setCurrentSerial: React.Dispatch<React.SetStateAction<number>>;
   containerRef: React.RefObject<HTMLDivElement | null>;
+  appMode: "standalone" | "fullscreen" | "minimal-ui" | "browser";
 };
 
 const MobileNavigationContext =
@@ -353,6 +382,7 @@ const MobileNavigationContext =
     currentSerial: 1,
     setCurrentSerial: () => 1,
     containerRef: { current: null },
+    appMode: "browser",
   });
 
 const MobileNavigation = ({
@@ -360,11 +390,13 @@ const MobileNavigation = ({
   navigationBarBGColor,
   navigationTextColor,
   navIconSize = 20,
+  initialScale,
 }: {
   contents: Content[];
   navigationBarBGColor?: string;
   navigationTextColor?: string;
   navIconSize?: number;
+  initialScale?: number;
 }) => {
   function sortContent(content1: Content, content2: Content) {
     return content1.serial - content2.serial;
@@ -378,6 +410,9 @@ const MobileNavigation = ({
 
   const containerRef = React.useRef<HTMLDivElement | null>(null);
 
+  useInitialScaleHook(initialScale);
+
+  const { appMode } = useAppModeHook();
   return (
     <MobileNavigationContext.Provider
       value={{
@@ -388,6 +423,7 @@ const MobileNavigation = ({
         currentSerial,
         setCurrentSerial,
         containerRef,
+        appMode,
       }}
     >
       <style>{`
@@ -397,6 +433,7 @@ const MobileNavigation = ({
       .${CSS_CLASS_PREFIX}mobile-navigation {
         display: flex;
         flex-direction: column;
+        min-width: 100vw;
       }`}</style>
       <div
         data-testid="mobile-navigation"
