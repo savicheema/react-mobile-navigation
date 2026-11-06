@@ -2,7 +2,7 @@
 import type { JSX } from "react";
 import * as React from "react";
 import { APP_MODES, CSS_CLASS_PREFIX } from "./constants";
-import { useInitialScaleHook } from "./hooks";
+import { useInitialScaleHook, useProgrammedContainerScrollHook } from "./hooks";
 import { useAppModeHook } from "./hooks";
 
 export type Content = {
@@ -115,14 +115,18 @@ export const useNavigationScrollHook = () => {
     containerRef,
   } = React.useContext(MobileNavigationContext);
 
+  const { scrollEl } = useProgrammedContainerScrollHook();
+  const { isIgnoreScroll } =
+    React.useContext<ContentScrollContextType>(ContentScrollContext);
+
   function handleScrollEvent(e: Event) {
-    if (isScrolling) return;
+    if (isScrolling || isIgnoreScroll) return;
 
     const mod = containerRef.current!.scrollLeft % window.innerWidth;
-
+    const baseMod = 25;
     // scroll right
-    if (mod > 120 && mod < window.innerWidth / 2) {
-      containerRef.current!.scroll({
+    if (mod > baseMod && mod < window.innerWidth / 2) {
+      scrollEl(containerRef, {
         left:
           Math.floor(containerRef.current!.scrollLeft / window.innerWidth) *
           window.innerWidth,
@@ -135,10 +139,10 @@ export const useNavigationScrollHook = () => {
       mod > window.innerWidth / 2 &&
       Math.ceil(containerRef.current!.scrollLeft / window.innerWidth) *
         window.innerWidth -
-        containerRef.current!.scrollLeft >
-        120
+        mod >
+        baseMod
     ) {
-      containerRef.current!.scroll({
+      scrollEl(containerRef, {
         left:
           Math.ceil(containerRef.current!.scrollLeft / window.innerWidth) *
           window.innerWidth,
@@ -235,18 +239,18 @@ const ContentContainer = ({ contents }: { contents: Content[] }) => {
         overflow-y: auto;
       }`}
       </style>
-      <div
-        className={`${CSS_CLASS_PREFIX}container`}
-        data-testid="content-container"
-        ref={containerRef}
-      >
-        <style>{`div.${CSS_CLASS_PREFIX}section {
+      <style>{`div.${CSS_CLASS_PREFIX}section {
           flex: 1 0 100vw; 
           justify-content: center; 
           border-left: 1px solid #ddd; 
           border-right: 1px solid #ddd;
           min-height: 100vh;
         }`}</style>
+      <div
+        className={`${CSS_CLASS_PREFIX}container`}
+        data-testid="content-container"
+        ref={containerRef}
+      >
         {!contents?.length
           ? "no content"
           : contents.map((content, index) => (
@@ -362,7 +366,7 @@ const NavigationBar = ({
   );
 };
 
-type MobileNavigationContextType = {
+export type MobileNavigationContextType = {
   currentScrollLeft: number;
   setCurrentScrollLeft: React.Dispatch<React.SetStateAction<number>>;
   isScrolling: boolean;
@@ -373,7 +377,12 @@ type MobileNavigationContextType = {
   appMode: "standalone" | "fullscreen" | "minimal-ui" | "browser";
 };
 
-const MobileNavigationContext =
+export type ContentScrollContextType = {
+  isIgnoreScroll: boolean;
+  setIsIgnoreScroll: React.Dispatch<React.SetStateAction<boolean>>;
+};
+
+export const MobileNavigationContext =
   React.createContext<MobileNavigationContextType>({
     currentScrollLeft: 0,
     setCurrentScrollLeft: () => 0,
@@ -383,6 +392,12 @@ const MobileNavigationContext =
     setCurrentSerial: () => 1,
     containerRef: { current: null },
     appMode: "browser",
+  });
+
+export const ContentScrollContext =
+  React.createContext<ContentScrollContextType>({
+    isIgnoreScroll: false,
+    setIsIgnoreScroll: () => null,
   });
 
 const MobileNavigation = ({
@@ -407,6 +422,8 @@ const MobileNavigation = ({
   const [currentScrollLeft, setCurrentScrollLeft] = React.useState(0);
   const [isScrolling, setIsScrolling] = React.useState(false);
   const [currentSerial, setCurrentSerial] = React.useState(1);
+
+  const [isIgnoreScroll, setIsIgnoreScroll] = React.useState(false);
 
   const containerRef = React.useRef<HTMLDivElement | null>(null);
 
@@ -439,7 +456,15 @@ const MobileNavigation = ({
         data-testid="mobile-navigation"
         className={`${CSS_CLASS_PREFIX}mobile-navigation`}
       >
-        <ContentContainer contents={sortedContent} />
+        <ContentScrollContext.Provider
+          value={{
+            isIgnoreScroll,
+            setIsIgnoreScroll,
+          }}
+        >
+          <ContentContainer contents={sortedContent} />
+        </ContentScrollContext.Provider>
+
         <NavigationBar
           contents={sortedContent}
           bgColor={navigationBarBGColor}

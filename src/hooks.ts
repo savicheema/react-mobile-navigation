@@ -1,9 +1,10 @@
+import { ContentScrollContext, MobileNavigationContext } from "./";
 import { APP_MODES } from "./constants";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
+import type { ContentScrollContextType, MobileNavigationContextType } from "./";
 
 export const useInitialScaleHook = (initialScale: number = 2) => {
   useEffect(() => {
-    console.log("INITIAL SCALE", initialScale);
     document.querySelector<Element>("meta[name=viewport]")?.setAttribute(
       "content",
       `width=device-width,
@@ -47,4 +48,38 @@ export const useAppModeHook = (): {
   }, []);
 
   return { appMode };
+};
+
+export const useProgrammedContainerScrollHook = () => {
+  const { containerRef } = useContext<MobileNavigationContextType>(
+    MobileNavigationContext,
+  );
+  const { setIsIgnoreScroll } =
+    useContext<ContentScrollContextType>(ContentScrollContext);
+
+  useEffect(() => {
+    containerRef.current?.addEventListener("scrollend", () => {
+      setIsIgnoreScroll(false);
+    });
+  });
+
+  const scrollEl = (
+    elRef = containerRef,
+    {
+      left = 0,
+      top = 0,
+      behavior = "smooth",
+    }: {
+      left?: number;
+      top?: number;
+      behavior?: ScrollBehavior | undefined;
+    },
+  ) => {
+    setIsIgnoreScroll(true);
+    elRef.current?.scroll({ left, top, behavior });
+  };
+
+  return {
+    scrollEl,
+  };
 };
